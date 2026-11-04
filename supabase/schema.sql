@@ -1,0 +1,26 @@
+create extension if not exists pgcrypto;
+create type public.booking_status as enum ('pending','confirmed','cancelled','completed');
+create type public.booking_kind as enum ('travel','guest_house');
+create type public.user_role as enum ('customer','admin');
+create table public.profiles (id uuid primary key references auth.users(id) on delete cascade, full_name text not null default '', phone text, role public.user_role not null default 'customer', created_at timestamptz not null default now());
+create table public.travel_routes (id uuid primary key default gen_random_uuid(), origin text not null, destination text not null, description text, active boolean not null default true, created_at timestamptz not null default now());
+create table public.travel_departures (id uuid primary key default gen_random_uuid(), route_id uuid not null references public.travel_routes(id) on delete cascade, vehicle_label text, departure_at timestamptz not null, passenger_capacity integer not null check (passenger_capacity > 0), active boolean not null default true, created_at timestamptz not null default now());
+create table public.guest_houses (id uuid primary key default gen_random_uuid(), name text not null, location text not null, description text, active boolean not null default true, created_at timestamptz not null default now());
+create table public.rooms (id uuid primary key default gen_random_uuid(), guest_house_id uuid not null references public.guest_houses(id) on delete cascade, room_name text not null, capacity integer not null default 1 check (capacity > 0), active boolean not null default true, created_at timestamptz not null default now());
+create table public.bookings (id uuid primary key default gen_random_uuid(), booking_reference text not null unique default upper(substr(encode(gen_random_bytes(8),'hex'),1,10)), customer_id uuid not null references public.profiles(id) on delete cascade, kind public.booking_kind not null, status public.booking_status not null default 'pending', travel_departure_id uuid references public.travel_departures(id), room_id uuid references public.rooms(id), passengers integer, check_in date, check_out date, customer_note text, created_at timestamptz not null default now(), constraint booking_type_fields check ((kind='travel' and travel_departure_id is not null and room_id is null and passengers > 0 and check_in is null and check_out is null) or (kind='guest_house' and room_id is not null and travel_departure_id is null and check_in is not null and check_out is not null and check_out > check_in)));
+alter table public.profiles enable row level security;
+alter table public.travel_routes enable row level security;
+alter table public.travel_departures enable row level security;
+alter table public.guest_houses enable row level security;
+alter table public.rooms enable row level security;
+alter table public.bookings enable row level security;
+create policy "profile read own" on public.profiles for select using (auth.uid() = id);
+create policy "profile update own" on public.profiles for update using (auth.uid() = id) with check (auth.uid() = id);
+create policy "public read active routes" on public.travel_routes for select using (active = true);
+create policy "public read active departures" on public.travel_departures for select using (active = true);
+create policy "public read active guest houses" on public.guest_houses for select using (active = true);
+create policy "public read active rooms" on public.rooms for select using (active = true);
+create policy "customer read own bookings" on public.bookings for select using (auth.uid() = customer_id);
+create policy "customer create own bookings" on public.bookings for insert with check (auth.uid() = customer_id);
+create policy "customer cancel own pending booking" on public.bookings for update using (auth.uid() = customer_id and status = 'pending') with check (auth.uid() = customer_id and status = 'cancelled');
+-- Add secure admin-only policies and trusted admin provisioning before production. Never permit self-assignment of admin role.
