@@ -1,17 +1,22 @@
 # Travel & Guest House Booking Platform
 
-A booking platform for travel trips and guest-house stays, with customer accounts and an admin dashboard. This project does **not** include payment processing or money tracking.
+Starter app for travel and guest-house booking requests, with customer accounts and an admin dashboard planned. **No payments or money tracking are included.**
 
-## Planned features
-- Customer sign-up/sign-in
-- Search and request travel bookings (origin, destination, date, time, passengers)
-- Browse guest houses and request room bookings (check-in/check-out, guests)
-- Booking history and cancellation requests
-- Admin management of trips, vehicles, guest houses, rooms, availability, users, and bookings
-- Booking references and status updates
+## Stack
+Next.js App Router + TypeScript; Supabase Auth + PostgreSQL.
 
-## Suggested stack
-Next.js, TypeScript, Tailwind CSS, and Supabase (Auth + Postgres).
+## Run locally
+1. Install Node.js 20+.
+2. Run `npm install`.
+3. Copy `.env.example` to `.env.local` and add your Supabase project URL and anon key.
+4. Run `supabase/schema.sql` in Supabase SQL Editor.
+5. Run `npm run dev` and visit http://localhost:3000.
 
-## Status
-Initial project setup. Configure Supabase credentials before enabling authentication or database-backed booking features.
+## Included
+- Responsive starter landing page
+- Supabase client helper
+- Schema for profiles, travel routes/departures, guest houses/rooms, and bookings
+- Booking references and status tracking
+
+## Next
+Implement authentication, booking forms and history, availability validation, and admin dashboard. Secure admin-only policies must be completed before production. Never expose a Supabase service-role key in browser code.
