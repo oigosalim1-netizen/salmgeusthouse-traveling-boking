@@ -8,10 +8,10 @@ export default function BookTravelPage() {
       <section className="hero">
         <div className="eyebrow">What are you looking for?</div>
         <h1>Choose Your Booking</h1>
-        <p>Book your journey or find a guest house to stay in.</p>
+        <p>Book your journey or find a room to book.</p>
         <div className="actions">
           <a className="btn" href="/book-journey">Book Travel</a>
-          <a className="btn" href="/find-house">Find House to Live</a>
+          <a className="btn" href="/find-house">Find Room to Book</a>
         </div>
       </section>
     </main>
