@@ -24,7 +24,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $function$
 begin
   insert into public.profiles (id, full_name, phone, role)
   values (
@@ -36,7 +36,7 @@ begin
   on conflict (id) do nothing;
   return new;
 end;
-$;
+$function$;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
