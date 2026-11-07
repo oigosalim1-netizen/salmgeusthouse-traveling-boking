@@ -18,6 +18,31 @@ create table if not exists public.media_assets (
   created_at timestamptz not null default now()
 );
 
+-- Create a customer profile automatically when a user signs up.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $
+begin
+  insert into public.profiles (id, full_name, phone, role)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data ->> 'full_name', ''),
+    coalesce(new.raw_user_meta_data ->> 'phone', ''),
+    'customer'
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute procedure public.handle_new_user();
+
 create or replace function public.is_admin()
 returns boolean
 language sql
