@@ -69,8 +69,11 @@ for all to authenticated using (public.is_admin()) with check (public.is_admin()
 
 -- The owner can publish the supplied confirmed fare. No other county fares are invented.
 insert into public.travel_routes (origin, destination, description, active, price_kes, max_group_size)
-values ('Nairobi', 'Kisii', 'Family Trip Package: KES 11,000 total for up to 7 people', true, 11000, 7)
-on conflict do nothing;
+select 'Nairobi', 'Kisii', 'Family Trip Package: KES 11,000 total for up to 7 people', true, 11000, 7
+where not exists (
+  select 1 from public.travel_routes
+  where lower(origin) = 'nairobi' and lower(destination) = 'kisii'
+);
 
 -- Public read access to files; only admins can upload, update or delete.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
