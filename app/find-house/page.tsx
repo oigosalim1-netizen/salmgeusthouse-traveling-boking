@@ -1,15 +1,13 @@
-export default function FindHousePage() {
-  return (
-    <main className="wrap">
-      <nav className="nav">
-        <a className="brand" href="/">Salim&apos;s Travel</a>
-        <a href="/book-travel">Back to choices</a>
-      </nav>
-      <section className="hero">
-        <div className="eyebrow">Guest house booking</div>
-        <h1>Find House to Live</h1>
-        <p>Guest house listings and available rooms will be added here.</p>
-      </section>
-    </main>
-  );
+"use client";
+
+import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+
+type Room={id:string;room_name:string;capacity:number;price_per_night_kes:number;image_url:string|null;guest_houses:{name:string;location:string}|null};
+export default function FindHousePage(){
+ const [rooms,setRooms]=useState<Room[]>([]);const [message,setMessage]=useState("Loading available rooms…");const [selected,setSelected]=useState<Room|null>(null);const [checkIn,setCheckIn]=useState("");const [checkOut,setCheckOut]=useState("");
+ useEffect(()=>{let active=true;(async()=>{const supabase=createClient();const {data,error}=await supabase.from("rooms").select("id,room_name,capacity,price_per_night_kes,image_url,guest_houses(name,location)").eq("active",true);if(!active)return;if(error)setMessage(error.message);else{setRooms((data||[]) as unknown as Room[]);setMessage(data?.length?"":"No rooms are listed yet. Please check again soon.");}})();return()=>{active=false;};},[]);
+ async function book(e:FormEvent){e.preventDefault();if(!selected)return;const supabase=createClient();const {data:{user}}=await supabase.auth.getUser();if(!user){setMessage("Please sign in before requesting a room booking.");return;}const {error}=await supabase.from("bookings").insert({customer_id:user.id,kind:"guest_house",room_id:selected.id,check_in:checkIn,check_out:checkOut});if(error)setMessage(error.message);else{setMessage("Your room booking request has been sent. View its status under My bookings.");setSelected(null);setCheckIn("");setCheckOut("");}}
+ return <main className="wrap"><nav className="nav"><Link className="brand" href="/">Salim&apos;s Travel</Link><div className="links"><Link href="/book-travel">Back to choices</Link><Link href="/bookings">My bookings</Link><Link href="/login">Sign in</Link></div></nav><section className="hero"><div className="eyebrow">Guest house booking</div><h1>Find Room to Book</h1><p>Explore available guest-house rooms and send a booking request.</p></section>{rooms.length?<div className="cards">{rooms.map(r=><article className="card" key={r.id}>{r.image_url&&<img src={r.image_url} alt={r.room_name} style={{width:"100%",height:180,objectFit:"cover",borderRadius:12}}/>}<div className="eyebrow">{r.guest_houses?.location||"Kenya"}</div><h2>{r.guest_houses?.name||"Guest house"}</h2><h3>{r.room_name}</h3><p>Capacity: {r.capacity} · KES {Number(r.price_per_night_kes).toLocaleString()} per night</p><button className="btn" onClick={()=>setSelected(r)}>Book this room</button></article>)}</div>:<p>{message}</p>}{selected&&<form className="card" onSubmit={book} style={{maxWidth:520,display:"grid",gap:12}}><h2>Request: {selected.room_name}</h2><label>Check-in<input type="date" required min={new Date().toISOString().slice(0,10)} value={checkIn} onChange={e=>setCheckIn(e.target.value)}/></label><label>Check-out<input type="date" required min={checkIn||new Date().toISOString().slice(0,10)} value={checkOut} onChange={e=>setCheckOut(e.target.value)}/></label><div className="actions"><button className="btn">Send booking request</button><button type="button" className="btn secondary" onClick={()=>setSelected(null)}>Close</button></div></form>}{message&&rooms.length>0&&<p role="status">{message}</p>}</main>;
 }
