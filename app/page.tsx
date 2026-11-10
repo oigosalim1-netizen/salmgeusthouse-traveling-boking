@@ -1,3 +1,5 @@
+import MediaGallery from "./media-gallery";
+
 export default function Home() {
   const phone = "0717818330";
   const whatsapp = "254717818330";
@@ -22,6 +24,7 @@ export default function Home() {
           </div>
         </div>
         <a className="btn" href="/book-travel">Next</a>
+        <MediaGallery />
       </section>
     </main>
   );
