@@ -56,6 +56,19 @@ select
 from auth.users u
 on conflict (id) do nothing;
 
+-- Customers may edit only their own contact details, never their role.
+revoke update on public.profiles from authenticated;
+grant update (full_name, phone) on public.profiles to authenticated;
+
+-- Seed the confirmed Nairobi-to-Kisii fare: KES 11,000 total for up to 7 people.
+-- Other county fares remain unpublished until the administrator adds them.
+insert into public.travel_routes (origin, destination, description, price_kes, max_group_size)
+select 'Nairobi', 'Kisii', 'Family Trip Package', 11000, 7
+where not exists (
+  select 1 from public.travel_routes
+  where lower(origin) = 'nairobi' and lower(destination) = 'kisii'
+);
+
 -- 4) Secure helper for administrator-only database and Storage policies.
 create or replace function public.is_admin()
 returns boolean
